@@ -36,60 +36,6 @@ public class RNReceivedMessageHandler {
         this.mFirebaseMessagingService = service;
     }
 
-    // Gets base information from the remote message. Does not describe application or anything else
-    // outside of the raw data received from the remote notification.
-    public static Bundle getBaseBundleFromRemoteMessage(RemoteMessage message) {
-        String from = message.getFrom();
-        RemoteMessage.Notification remoteNotification = message.getNotification();
-        final Bundle bundle = new Bundle();
-        // Putting it from remoteNotification first so it can be overriden if message
-        // data has it
-        if (remoteNotification != null) {
-            // ^ It's null when message is from GCM
-            bundle.putString("title", remoteNotification.getTitle());
-            bundle.putString("message", remoteNotification.getBody());
-            bundle.putString("sound", remoteNotification.getSound());
-            bundle.putString("color", remoteNotification.getColor());
-        }
-
-        Map<String, String> notificationData = message.getData();
-
-        // Copy `twi_body` to `message` to support Twilio
-        if (notificationData.containsKey("twi_body")) {
-            bundle.putString("message", notificationData.get("twi_body"));
-        }
-        JSONObject data = getPushData(notificationData.get("data"));
-
-        if (data != null) {
-            if (!bundle.containsKey("message")) {
-                bundle.putString("message", data.optString("alert", null));
-            }
-            if (!bundle.containsKey("title")) {
-                bundle.putString("title", data.optString("title", null));
-            }
-            if (!bundle.containsKey("sound")) {
-                bundle.putString("soundName", data.optString("sound", null));
-            }
-            if (!bundle.containsKey("color")) {
-                bundle.putString("color", data.optString("color", null));
-            }
-        }
-
-        Bundle dataBundle = new Bundle();
-        for(Map.Entry<String, String> entry : notificationData.entrySet()) {
-            dataBundle.putString(entry.getKey(), entry.getValue());
-        }
-        bundle.putParcelable("data", dataBundle);
-
-        // If notification ID is not provided by the user for push notification, generate one at random
-        if (bundle.getString("id") == null) {
-            SecureRandom randomNumberGenerator = new SecureRandom();
-            bundle.putString("id", String.valueOf(randomNumberGenerator.nextInt()));
-        }
-
-        return bundle;
-    }
-
     public void onNewToken(String token) {
         final String deviceToken = token;
         Log.d(LOG_TAG, "Refreshed token: " + deviceToken);
@@ -128,16 +74,53 @@ public class RNReceivedMessageHandler {
     }
 
     public void handleReceivedMessage(RemoteMessage message) {
+        String from = message.getFrom();
+        RemoteMessage.Notification remoteNotification = message.getNotification();
+        final Bundle bundle = new Bundle();
+        // Putting it from remoteNotification first so it can be overriden if message
+        // data has it
+        if (remoteNotification != null) {
+            // ^ It's null when message is from GCM
+            bundle.putString("title", remoteNotification.getTitle());
+            bundle.putString("message", remoteNotification.getBody());
+            bundle.putString("sound", remoteNotification.getSound());
+            bundle.putString("color", remoteNotification.getColor());
+        }
+
         Map<String, String> notificationData = message.getData();
+
+        // Copy `twi_body` to `message` to support Twilio
+        if (notificationData.containsKey("twi_body")) {
+            bundle.putString("message", notificationData.get("twi_body"));
+        }
         JSONObject data = getPushData(notificationData.get("data"));
+
         if (data != null) {
+            if (!bundle.containsKey("message")) {
+                bundle.putString("message", data.optString("alert", null));
+            }
+            if (!bundle.containsKey("title")) {
+                bundle.putString("title", data.optString("title", null));
+            }
+            if (!bundle.containsKey("sound")) {
+                bundle.putString("soundName", data.optString("sound", null));
+            }
+            if (!bundle.containsKey("color")) {
+                bundle.putString("color", data.optString("color", null));
+            }
+
             final int badge = data.optInt("badge", -1);
             if (badge >= 0) {
                 ApplicationBadgeHelper.INSTANCE.setApplicationIconBadgeNumber(mFirebaseMessagingService, badge);
             }
         }
 
-        final Bundle bundle = getBaseBundleFromRemoteMessage(message);
+        Bundle dataBundle = new Bundle();
+        for(Map.Entry<String, String> entry : notificationData.entrySet()) {
+            dataBundle.putString(entry.getKey(), entry.getValue());
+        }
+        bundle.putParcelable("data", dataBundle);
+
         Log.v(LOG_TAG, "onMessageReceived: " + bundle);
 
         // We need to run this on the main thread, as the React code assumes that is true.
@@ -169,7 +152,7 @@ public class RNReceivedMessageHandler {
         });
     }
 
-    private static JSONObject getPushData(String dataString) {
+    private JSONObject getPushData(String dataString) {
         try {
             return new JSONObject(dataString);
         } catch (Exception e) {
@@ -178,6 +161,13 @@ public class RNReceivedMessageHandler {
     }
 
     private void handleRemotePushNotification(ReactApplicationContext context, Bundle bundle) {
+
+        // If notification ID is not provided by the user for push notification, generate one at random
+        if (bundle.getString("id") == null) {
+            SecureRandom randomNumberGenerator = new SecureRandom();
+            bundle.putString("id", String.valueOf(randomNumberGenerator.nextInt()));
+        }
+
         RNPushNotificationConfig config = new RNPushNotificationConfig(mFirebaseMessagingService.getApplication());
 
         boolean isForeground = isApplicationInForeground();
