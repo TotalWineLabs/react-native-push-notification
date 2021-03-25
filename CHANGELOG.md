@@ -2,10 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## Unreleased
 
 ### Breaking changes
 
@@ -13,6 +12,176 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+## [7.2.3] 2021-03-18
+
+### Fixed
+
+- (Android) Fix: Notification drawer doesn't close after click on action that navigates you to app [#1914](https://github.com/zo0r/react-native-push-notification/issues/1914)
+- (iOS) Fix: foreground notification property [#1916](https://github.com/zo0r/react-native-push-notification/pull/1916)
+
+## [7.2.2] 2021-03-04
+
+### Fixed
+
+- (Android) Fix: Could not invoke RNPushNotification.getDeliveredNotifications. [#1878](https://github.com/zo0r/react-native-push-notification/issues/1878)
+- (fix) deep clone details and notifications. [#1793](https://github.com/zo0r/react-native-push-notification/issues/1793)
+
+## [7.2.1] 2021-02-11
+
+### Fixed
+
+- (iOS) Fix `playSound` options on local notifications. [#1858](https://github.com/zo0r/react-native-push-notification/issues/1858#issuecomment-775714298)
+
+## [7.2.0] 2021-01-24
+
+### Features
+
+- (Android) Handle localization for notification title and body [#1837](https://github.com/zo0r/react-native-push-notification/pull/1837)
+
+## [7.1.1] 2021-01-20
+
+### Fixed
+
+- (Android) unsubscribeFromTopic function fix [#1831](https://github.com/zo0r/react-native-push-notification/pull/1831)
+
+## [7.1.0] 2021-01-16
+
+# Features
+
+- (Android) Add hooks to intent handling and bundle parsing [#1819](https://github.com/zo0r/react-native-push-notification/pull/1819)
+ 
+## [7.0.0] 2020-12-23
+
+### Breaking changes
+
+- (iOS) Replace deprecated local notification methods on iOS [#1751](https://github.com/zo0r/react-native-push-notification/pull/1751)
+- (Android) Rename the Android package from `RNPushNotification` to `ReactNativePushNotification` resolve [#893](https://github.com/zo0r/react-native-push-notification/issues/893)
+- (Android) Allow `userInfo` to be stored in scheduled notification as in iOS (mapped as `data` on press or list scheduled notifications).
+
+### Features
+
+- (Android) silent channel using playSound flag
+- (Android) implement 'bigLargeIcon' for Android notifications (must be combined with BigPicture) [#1730](https://github.com/zo0r/react-native-push-notification/pull/1730)
+- (Android) notification with inline reply [#612](https://github.com/zo0r/react-native-push-notification/pull/612)
+- (Android) Support using drawable as Android small icon [#1787](https://github.com/zo0r/react-native-push-notification/pull/1787)
+
+## [6.1.3] 2020-11-09
+
+### Fixed
+
+- (Android) Null pointer exception when trying to create channel [#1734](https://github.com/zo0r/react-native-push-notification/issues/1734)
+
+## [6.1.2] 2020-10-29
+
+### Fixed
+
+- (Android) Fix for vibration on notifs for Android API >= 26 [#1686](https://github.com/zo0r/react-native-push-notification/pull/1686)
+
+## [6.1.1] 2020-09-29
+
+### Fixed
+
+- (Android) Fix a crash when the application is in background [#1676](https://github.com/zo0r/react-native-push-notification/issues/1676)
+
+## [6.1.0] 2020-09-28
+
+### Features
+
+- (Android) Allow a default channel in the `AndroidManifest`:
+  ```xml
+        <meta-data android:name="com.dieam.reactnativepushnotification.default_notification_channel_id" android:value="..."/>
+  ```
+  If not defined, fallback to the Firebase value of:
+  ```xml
+        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="..."/>
+  ```
+  If not defined, fallback to the default Firebase channel id `fcm_fallback_notification_channel`
+
+## [6.0.0] 2020-09-26
+
+### Breaking changes
+
+- (Android) Channel Management: In order to limit the scope of responsability of this library, developers are now responsible of the creation of the channels. You can find the documentation at https://github.com/zo0r/react-native-push-notification#channel-management-android. These changes are also made to allow improvements in the future of the library. Here the list of impacts:
+  - You must create your channels before triggering a notification.
+  - These entries in `AndroidManifest` are deprecated:
+  ```xml
+        <meta-data android:name="com.dieam.reactnativepushnotification.notification_channel_name" android:value="..."/>
+        <meta-data android:name="com.dieam.reactnativepushnotification.notification_channel_description" android:value="..."/>
+        <meta-data android:name="com.dieam.reactnativepushnotification.channel_create_default" android:value="..."/>
+  ```
+  -  Followings options changed on Android in `localNotification` and `localNotificationSchedule`:
+     - `channelId` becomes mandatory (warning if not provided)
+     - `channelName` is deprecated
+     - `channelDescription` is deprecated
+     - `importance` is deprecated
+  - These changes help to avoid an issue [#1649](https://github.com/zo0r/react-native-push-notification/issues/1649)
+- (Android) Remove check for the intent `BOOT_COMPLETED`, this should allow more intent action such as `QUICKBOOT_POWERON`. It's recommended to update `AndroidManifest`, the `RNPushNotificationBootEventReceiver` to:
+  ```xml
+        <receiver android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationBootEventReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
+  ```
+- `@react-native-community/push-notification-ios` is now a `peerDependency`, please make sure that you installed this library with NPM or YARN.
+- (Android) Fix a bug where notification data are not inside `data` property after been pressed by user. When sending notification + data and app in background.
+- (Android) Add more fields from the firebase notification part. (Thanks to @fattomhk with this PR [#1626](https://github.com/zo0r/react-native-push-notification/pull/1626))
+  - `notificationPriority`
+  - `image`
+  - `tag`
+  - `visibility`
+- (Android) `data.twi_body` is no more used to trigger a notification in notification-center. Revert of [#744](https://github.com/zo0r/react-native-push-notification/pull/744)
+
+### Fixed
+
+- (iOS) upgrade `@react-native-community/push-notification-ios`, fixe the value of `userInteraction` [@react-native-community/push-notification-ios#122](https://github.com/react-native-community/push-notification-ios/pull/122).
+
+## [5.1.1] 2020-09-15
+
+### Fixed
+
+- (Android) Fatal Exception: java.lang.NullPointerException [#1641](https://github.com/zo0r/react-native-push-notification/issues/1641)
+
+## [5.1.0] 2020-08-31
+
+### Features
+
+- (Android) Add support for specifying a delegate FirebaseMessagingService [#1589](https://github.com/zo0r/react-native-push-notification/pull/1589)
+- (Android) Add support of `when`, `usesChronometer` and `timeoutAfter`.
+
+### Fixed
+
+- (Android) Fix a bug where `userInteraction` is not set, notification when app in background pressed by user.
+
+
+## [5.0.1] 2020-08-04
+
+### Fixed
+
+- (Android) Fix change that make gradle build fail [#1578](https://github.com/zo0r/react-native-push-notification/pull/1578).
+
+## [5.0.0] 2020-08-03
+
+### Breaking changes
+
+- (Android/iOS) Unify returned values between iOS and Android [#1516](https://github.com/zo0r/react-native-push-notification/pull/1516).
+- (Android/iOS) `.popInitialNotification(callback)` now return the same format as `onNotification()`.
+- (Android) `popInitialNotification` in `configure()` now trigger only once on app startup, same as iOS.
+- (Android) `notification.foreground` now return the good value, before the value was `false` most of the time.
+
+### Features
+
+- (Android) Add function `createChannel` for custom Android channel support [#1509](https://github.com/zo0r/react-native-push-notification/pull/1509)
+- (Android) Add Android `messageId` to enable integration with `react-native-firebase/messaging` [#1510](https://github.com/zo0r/react-native-push-notification/pull/1510)
+- (Android) Add support for `onlyAlertOnce` property [#1519](https://github.com/zo0r/react-native-push-notification/pull/1519)
+- (Android) Allow to change default notification channel name after it's creation [#1549](https://github.com/zo0r/react-native-push-notification/pull/1549)
+
+### Fixed
+
+- (Android) `popInitialNotification` in `configure()` now trigger only once and do not trigger twice `onNotification()` when user press the notification, more details: [#1516](https://github.com/zo0r/react-native-push-notification/pull/1516).
+- (Android) `notification.foreground` now return the good value, before the value was `false` most of the time.
 
 ## [4.0.0] 2020-07-06
 

@@ -10,6 +10,8 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Iterator;
+
 import static com.dieam.reactnativepushnotification.modules.RNPushNotification.LOG_TAG;
 
 public class RNPushNotificationAttributes {
@@ -28,14 +30,12 @@ public class RNPushNotificationAttributes {
     private static final String BIG_PICTURE_URL = "bigPictureUrl";
     private static final String SHORTCUT_ID = "shortcutId";
     private static final String CHANNEL_ID = "channelId";
-    private static final String CHANNEL_NAME = "channelName";
-    private static final String CHANNEL_DESCRIPTION = "channelDescription";
     private static final String NUMBER = "number";
     private static final String SOUND = "sound";
     private static final String COLOR = "color";
     private static final String GROUP = "group";
     private static final String GROUP_SUMMARY = "groupSummary";
-    private static final String USER_INTERACTION = "userInteraction";
+    private static final String MESSAGE_ID = "messageId";
     private static final String PLAY_SOUND = "playSound";
     private static final String VIBRATE = "vibrate";
     private static final String VIBRATION = "vibration";
@@ -44,9 +44,16 @@ public class RNPushNotificationAttributes {
     private static final String TAG = "tag";
     private static final String REPEAT_TYPE = "repeatType";
     private static final String REPEAT_TIME = "repeatTime";
+    private static final String WHEN = "when";
+    private static final String USES_CHRONOMETER = "usesChronometer";
+    private static final String TIMEOUT_AFTER = "timeoutAfter";
+    private static final String ONLY_ALERT_ONCE = "onlyAlertOnce";
     private static final String ONGOING = "ongoing";
+    private static final String REPLY_BUTTON_TEXT = "reply_button_text";
+    private static final String REPLAY_PLACEHOLDER_TEXT = "reply_placeholder_text";
     private static final String ALLOW_WHILE_IDLE = "allowWhileIdle";
     private static final String IGNORE_IN_FOREGROUND = "ignoreInForeground";
+    private static final String USER_INFO = "userInfo";
 
     private final String id;
     private final String message;
@@ -64,13 +71,11 @@ public class RNPushNotificationAttributes {
     private final String shortcutId;
     private final String number;
     private final String channelId;
-    private final String channelName;
-    private final String channelDescription;
     private final String sound;
     private final String color;
     private final String group;
     private final boolean groupSummary;
-    private final boolean userInteraction;
+    private final String messageId;
     private final boolean playSound;
     private final boolean vibrate;
     private final double vibration;
@@ -79,9 +84,16 @@ public class RNPushNotificationAttributes {
     private final String tag;
     private final String repeatType;
     private final double repeatTime;
+    private final double when;
+    private final boolean usesChronometer;
+    private final double timeoutAfter;
+    private final boolean onlyAlertOnce;
     private final boolean ongoing;
+    private final String reply_button_text;
+    private final String reply_placeholder_text;
     private final boolean allowWhileIdle;
     private final boolean ignoreInForeground;
+    private final String userInfo;
 
     public RNPushNotificationAttributes(Bundle bundle) {
         id = bundle.getString(ID);
@@ -100,13 +112,11 @@ public class RNPushNotificationAttributes {
         shortcutId = bundle.getString(SHORTCUT_ID);
         number = bundle.getString(NUMBER);
         channelId = bundle.getString(CHANNEL_ID);
-        channelName = bundle.getString(CHANNEL_NAME);
-        channelDescription = bundle.getString(CHANNEL_DESCRIPTION);
         sound = bundle.getString(SOUND);
         color = bundle.getString(COLOR);
         group = bundle.getString(GROUP);
         groupSummary = bundle.getBoolean(GROUP_SUMMARY);
-        userInteraction = bundle.getBoolean(USER_INTERACTION);
+        messageId = bundle.getString(MESSAGE_ID);
         playSound = bundle.getBoolean(PLAY_SOUND);
         vibrate = bundle.getBoolean(VIBRATE);
         vibration = bundle.getDouble(VIBRATION);
@@ -115,9 +125,16 @@ public class RNPushNotificationAttributes {
         tag = bundle.getString(TAG);
         repeatType = bundle.getString(REPEAT_TYPE);
         repeatTime = bundle.getDouble(REPEAT_TIME);
+        when = bundle.getDouble(WHEN);
+        usesChronometer = bundle.getBoolean(USES_CHRONOMETER);
+        timeoutAfter = bundle.getDouble(TIMEOUT_AFTER);
+        onlyAlertOnce = bundle.getBoolean(ONLY_ALERT_ONCE);
         ongoing = bundle.getBoolean(ONGOING);
+        reply_button_text = bundle.getString(REPLY_BUTTON_TEXT);
+        reply_placeholder_text = bundle.getString(REPLAY_PLACEHOLDER_TEXT);
         allowWhileIdle = bundle.getBoolean(ALLOW_WHILE_IDLE);
         ignoreInForeground = bundle.getBoolean(IGNORE_IN_FOREGROUND);
+        userInfo = bundle.getString(USER_INFO);
     }
 
     private RNPushNotificationAttributes(JSONObject jsonObject) {
@@ -138,13 +155,11 @@ public class RNPushNotificationAttributes {
             shortcutId = jsonObject.has(SHORTCUT_ID) ? jsonObject.getString(SHORTCUT_ID) : null;
             number = jsonObject.has(NUMBER) ? jsonObject.getString(NUMBER) : null;
             channelId = jsonObject.has(CHANNEL_ID) ? jsonObject.getString(CHANNEL_ID) : null;
-            channelName = jsonObject.has(CHANNEL_NAME) ? jsonObject.getString(CHANNEL_NAME) : null;
-            channelDescription = jsonObject.has(CHANNEL_DESCRIPTION) ? jsonObject.getString(CHANNEL_DESCRIPTION) : null;
             sound = jsonObject.has(SOUND) ? jsonObject.getString(SOUND) : null;
             color = jsonObject.has(COLOR) ? jsonObject.getString(COLOR) : null;
             group = jsonObject.has(GROUP) ? jsonObject.getString(GROUP) : null;
             groupSummary = jsonObject.has(GROUP_SUMMARY) ? jsonObject.getBoolean(GROUP_SUMMARY) : false;
-            userInteraction = jsonObject.has(USER_INTERACTION) ? jsonObject.getBoolean(USER_INTERACTION) : false;
+            messageId = jsonObject.has(MESSAGE_ID) ? jsonObject.getString(MESSAGE_ID) : null;
             playSound = jsonObject.has(PLAY_SOUND) ? jsonObject.getBoolean(PLAY_SOUND) : true;
             vibrate = jsonObject.has(VIBRATE) ? jsonObject.getBoolean(VIBRATE) : true;
             vibration = jsonObject.has(VIBRATION) ? jsonObject.getDouble(VIBRATION) : 1000;
@@ -153,9 +168,16 @@ public class RNPushNotificationAttributes {
             tag = jsonObject.has(TAG) ? jsonObject.getString(TAG) : null;
             repeatType = jsonObject.has(REPEAT_TYPE) ? jsonObject.getString(REPEAT_TYPE) : null;
             repeatTime = jsonObject.has(REPEAT_TIME) ? jsonObject.getDouble(REPEAT_TIME) : 0.0;
+            when = jsonObject.has(WHEN) ? jsonObject.getDouble(WHEN) : -1;
+            usesChronometer = jsonObject.has(USES_CHRONOMETER) ? jsonObject.getBoolean(USES_CHRONOMETER) : false;
+            timeoutAfter = jsonObject.has(TIMEOUT_AFTER) ? jsonObject.getDouble(TIMEOUT_AFTER) : -1;
+            onlyAlertOnce = jsonObject.has(ONLY_ALERT_ONCE) ? jsonObject.getBoolean(ONLY_ALERT_ONCE) : false;
             ongoing = jsonObject.has(ONGOING) ? jsonObject.getBoolean(ONGOING) : false;
+            reply_button_text = jsonObject.has(REPLY_BUTTON_TEXT) ? jsonObject.getString(REPLY_BUTTON_TEXT) : null;
+            reply_placeholder_text = jsonObject.has(REPLAY_PLACEHOLDER_TEXT) ? jsonObject.getString(REPLAY_PLACEHOLDER_TEXT) : null;
             allowWhileIdle = jsonObject.has(ALLOW_WHILE_IDLE) ? jsonObject.getBoolean(ALLOW_WHILE_IDLE) : false;
             ignoreInForeground = jsonObject.has(IGNORE_IN_FOREGROUND) ? jsonObject.getBoolean(IGNORE_IN_FOREGROUND) : false;
+            userInfo = jsonObject.has(USER_INFO) ? jsonObject.getString(USER_INFO) : null;
         } catch (JSONException e) {
             throw new IllegalStateException("Exception while initializing RNPushNotificationAttributes from JSON", e);
         }
@@ -164,6 +186,7 @@ public class RNPushNotificationAttributes {
     @NonNull
     public static RNPushNotificationAttributes fromJson(String notificationAttributesJson) throws JSONException {
         JSONObject jsonObject = new JSONObject(notificationAttributesJson);
+        
         return new RNPushNotificationAttributes(jsonObject);
     }
 
@@ -175,41 +198,49 @@ public class RNPushNotificationAttributes {
      * @return true all fields in userInfo object match, false otherwise
      */
     public boolean matches(ReadableMap userInfo) {
-        Bundle bundle = toBundle();
+        try {
+          if(this.userInfo == null) {
+            return false;
+          }
 
-        ReadableMapKeySetIterator iterator = userInfo.keySetIterator();
-        while (iterator.hasNextKey()) {
-            String key = iterator.nextKey();
+          JSONObject jsonObject = new JSONObject(this.userInfo);
 
-            if (!bundle.containsKey(key))
-                return false;
+          ReadableMapKeySetIterator iterator = userInfo.keySetIterator();
+          while (iterator.hasNextKey()) {
+              String key = iterator.nextKey();
 
-            switch (userInfo.getType(key)) {
-                case Null: {
-                    if (bundle.get(key) != null)
-                        return false;
-                    break;
-                }
-                case Boolean: {
-                    if (userInfo.getBoolean(key) != bundle.getBoolean(key))
-                        return false;
-                    break;
-                }
-                case Number: {
-                    if ((userInfo.getDouble(key) != bundle.getDouble(key)) && (userInfo.getInt(key) != bundle.getInt(key)))
-                        return false;
-                    break;
-                }
-                case String: {
-                    if (!userInfo.getString(key).equals(bundle.getString(key)))
-                        return false;
-                    break;
-                }
-                case Map:
-                    return false;//there are no maps in the bundle
-                case Array:
-                    return false;//there are no arrays in the bundle
-            }
+              if (!jsonObject.has(key))
+                  return false;
+
+              switch (userInfo.getType(key)) {
+                  case Null: {
+                      if (jsonObject.get(key) != null)
+                          return false;
+                      break;
+                  }
+                  case Boolean: {
+                      if (userInfo.getBoolean(key) != jsonObject.getBoolean(key))
+                          return false;
+                      break;
+                  }
+                  case Number: {
+                      if ((userInfo.getDouble(key) != jsonObject.getDouble(key)) && (userInfo.getInt(key) != jsonObject.getInt(key)))
+                          return false;
+                      break;
+                  }
+                  case String: {
+                      if (!userInfo.getString(key).equals(jsonObject.getString(key)))
+                          return false;
+                      break;
+                  }
+                  case Map:
+                      return false;//there are no maps in the jsonObject
+                  case Array:
+                      return false;//there are no arrays in the jsonObject
+              }
+          }
+        } catch(JSONException e) {
+          return false;
         }
 
         return true;
@@ -233,13 +264,11 @@ public class RNPushNotificationAttributes {
         bundle.putString(SHORTCUT_ID, shortcutId);
         bundle.putString(NUMBER, number);
         bundle.putString(CHANNEL_ID, channelId);
-        bundle.putString(CHANNEL_NAME, channelName);
-        bundle.putString(CHANNEL_DESCRIPTION, channelDescription);
         bundle.putString(SOUND, sound);
         bundle.putString(COLOR, color);
         bundle.putString(GROUP, group);
         bundle.putBoolean(GROUP_SUMMARY, groupSummary);
-        bundle.putBoolean(USER_INTERACTION, userInteraction);
+        bundle.putString(MESSAGE_ID, messageId);
         bundle.putBoolean(PLAY_SOUND, playSound);
         bundle.putBoolean(VIBRATE, vibrate);
         bundle.putDouble(VIBRATION, vibration);
@@ -248,9 +277,16 @@ public class RNPushNotificationAttributes {
         bundle.putString(TAG, tag);
         bundle.putString(REPEAT_TYPE, repeatType);
         bundle.putDouble(REPEAT_TIME, repeatTime);
+        bundle.putDouble(WHEN, when);
+        bundle.putBoolean(USES_CHRONOMETER, usesChronometer);
+        bundle.putDouble(TIMEOUT_AFTER, timeoutAfter);
+        bundle.putBoolean(ONLY_ALERT_ONCE, onlyAlertOnce);
         bundle.putBoolean(ONGOING, ongoing);
+        bundle.putString(REPLY_BUTTON_TEXT, reply_button_text);
+        bundle.putString(REPLAY_PLACEHOLDER_TEXT, reply_placeholder_text);
         bundle.putBoolean(ALLOW_WHILE_IDLE, allowWhileIdle);
         bundle.putBoolean(IGNORE_IN_FOREGROUND, ignoreInForeground);
+        bundle.putString(USER_INFO, userInfo);
         return bundle;
     }
 
@@ -273,13 +309,11 @@ public class RNPushNotificationAttributes {
             jsonObject.put(SHORTCUT_ID, shortcutId);
             jsonObject.put(NUMBER, number);
             jsonObject.put(CHANNEL_ID, channelId);
-            jsonObject.put(CHANNEL_NAME, channelName);
-            jsonObject.put(CHANNEL_DESCRIPTION, channelDescription);
             jsonObject.put(SOUND, sound);
             jsonObject.put(COLOR, color);
             jsonObject.put(GROUP, group);
             jsonObject.put(GROUP_SUMMARY, groupSummary);
-            jsonObject.put(USER_INTERACTION, userInteraction);
+            jsonObject.put(MESSAGE_ID, messageId);
             jsonObject.put(PLAY_SOUND, playSound);
             jsonObject.put(VIBRATE, vibrate);
             jsonObject.put(VIBRATION, vibration);
@@ -288,9 +322,16 @@ public class RNPushNotificationAttributes {
             jsonObject.put(TAG, tag);
             jsonObject.put(REPEAT_TYPE, repeatType);
             jsonObject.put(REPEAT_TIME, repeatTime);
+            jsonObject.put(WHEN, when);
+            jsonObject.put(USES_CHRONOMETER, usesChronometer);
+            jsonObject.put(TIMEOUT_AFTER, timeoutAfter);
+            jsonObject.put(ONLY_ALERT_ONCE, onlyAlertOnce);
             jsonObject.put(ONGOING, ongoing);
+            jsonObject.put(REPLY_BUTTON_TEXT, reply_button_text);
+            jsonObject.put(REPLAY_PLACEHOLDER_TEXT, reply_placeholder_text);
             jsonObject.put(ALLOW_WHILE_IDLE, allowWhileIdle);
             jsonObject.put(IGNORE_IN_FOREGROUND, ignoreInForeground);
+            jsonObject.put(USER_INFO, userInfo);
         } catch (JSONException e) {
             Log.e(LOG_TAG, "Exception while converting RNPushNotificationAttributes to " +
                     "JSON. Returning an empty object", e);
@@ -319,13 +360,11 @@ public class RNPushNotificationAttributes {
                 ", shortcutId='" + shortcutId + '\'' +
                 ", number='" + number + '\'' +
                 ", channelId='" + channelId + '\'' +
-                ", channelName='" + channelId + '\'' +
-                ", channelDescription='" + channelDescription + '\'' +
                 ", sound='" + sound + '\'' +
                 ", color='" + color + '\'' +
                 ", group='" + group + '\'' +
                 ", groupSummary='" + groupSummary + '\'' +
-                ", userInteraction=" + userInteraction +
+                ", messageId='" + messageId + '\'' +
                 ", playSound=" + playSound +
                 ", vibrate=" + vibrate +
                 ", vibration=" + vibration +
@@ -334,9 +373,16 @@ public class RNPushNotificationAttributes {
                 ", tag='" + tag + '\'' +
                 ", repeatType='" + repeatType + '\'' +
                 ", repeatTime=" + repeatTime +
+                ", when=" + when +
+                ", usesChronometer=" + usesChronometer +
+                ", timeoutAfter=" + timeoutAfter +
+                ", onlyAlertOnce=" + onlyAlertOnce +
                 ", ongoing=" + ongoing +
+                ", reply_button_text=" + reply_button_text +
+                ", reply_placeholder_text=" + reply_placeholder_text +
                 ", allowWhileIdle=" + allowWhileIdle +
                 ", ignoreInForeground=" + ignoreInForeground +
+                ", userInfo=" + userInfo +
                 '}';
     }
 
@@ -358,6 +404,10 @@ public class RNPushNotificationAttributes {
 
     public String getNumber() {
         return number;
+    }
+
+    public String getUserInfo() {
+        return userInfo;
     }
 
     public String getRepeatType() {

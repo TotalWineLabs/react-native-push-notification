@@ -6,12 +6,17 @@
 React Native Local and Remote Notifications for iOS and Android
 
 
-## 🎉 Version 4.0.0 is live ! 🎉
+## 🎉 Version 7.x is live ! 🎉
 
-Check out for changes in the CHANGELOG:
+Check out for changes and migration in the CHANGELOG:
 
 [Changelog](https://github.com/zo0r/react-native-push-notification/blob/master/CHANGELOG.md)
 
+# Supporting the project
+
+Maintaining this project takes time. To help allocate time, you can Buy Me a Coffee :wink:
+
+<a href="https://www.buymeacoffee.com/Dallas62" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-blue.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;" ></a>
 
 ## Supported React Native Versions
 
@@ -51,9 +56,26 @@ Having a problem? Read the [troubleshooting](./trouble-shooting.md) guide before
 
 ## iOS manual Installation
 
-The component uses PushNotificationIOS for the iOS part.
+The component uses PushNotificationIOS for the iOS part. You should follow their [installation instructions](https://github.com/react-native-community/react-native-push-notification-ios).
 
-[Please see: PushNotificationIOS](https://github.com/react-native-community/react-native-push-notification-ios)
+When done, modify the following method in the file `AppDelegate.m`:
+```objective-c
+// Called when a notification is delivered to a foreground app.
+-(void)userNotificationCenter:(UNUserNotificationCenter *)center
+      willPresentNotification:(UNNotification *)notification
+        withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler
+{
+  // Still call the JS onNotification handler so it can display the new message right away
+  NSDictionary *userInfo = notification.request.content.userInfo;
+  [RNCPushNotificationIOS didReceiveRemoteNotification:userInfo
+                                fetchCompletionHandler:^void (UIBackgroundFetchResult result){}];
+
+  // allow showing foreground notifications
+  completionHandler(UNNotificationPresentationOptionSound | UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionBadge);
+  // or if you wish to hide all notification while in foreground replace it with 
+  // completionHandler(UNNotificationPresentationOptionNone);
+}
+```
 
 ## Android manual Installation
 
@@ -84,17 +106,9 @@ In your `android/app/src/main/AndroidManifest.xml`
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
     <application ....>
-        <meta-data  android:name="com.dieam.reactnativepushnotification.notification_channel_name"
-                android:value="YOUR NOTIFICATION CHANNEL NAME"/>
-        <meta-data  android:name="com.dieam.reactnativepushnotification.notification_channel_description"
-                    android:value="YOUR NOTIFICATION CHANNEL DESCRIPTION"/>
-
-        <!-- Change the value to true to enable pop-up for in foreground (remote-only, for local use ignoreInForeground) -->
+        <!-- Change the value to true to enable pop-up for in foreground on receiving remote notifications (for prevent duplicating while showing local notifications set this to false) -->
         <meta-data  android:name="com.dieam.reactnativepushnotification.notification_foreground"
                     android:value="false"/>
-        <!-- Change the value to false if you don't want the creation of the default channel -->
-        <meta-data  android:name="com.dieam.reactnativepushnotification.channel_create_default"
-                    android:value="true"/>
         <!-- Change the resource name to your App's accent color - or any other color you want -->
         <meta-data  android:name="com.dieam.reactnativepushnotification.notification_color"
                     android:resource="@color/white"/> <!-- or @android:color/{name} to use a standard color -->
@@ -104,6 +118,8 @@ In your `android/app/src/main/AndroidManifest.xml`
         <receiver android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationBootEventReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
 
@@ -215,10 +231,12 @@ public class MainApplication extends Application implements ReactApplication {
 ## Usage
 
 **DO NOT USE `.configure()` INSIDE A COMPONENT, EVEN `App`**
+> If you do, notification handlers will not fire, because they are not loaded. Instead, use `.configure()` in the app's first file, usually `index.js`.
+
 
 ```javascript
 import PushNotificationIOS from "@react-native-community/push-notification-ios";
-var PushNotification = require("react-native-push-notification");
+import PushNotification from "react-native-push-notification";
 
 // Must be outside of any component LifeCycle (such as `componentDidMount`).
 PushNotification.configure({
@@ -289,7 +307,7 @@ Notification object example:
     foreground: false, // BOOLEAN: If the notification was received in foreground or not
     userInteraction: false, // BOOLEAN: If the notification was opened by the user from the notification area or not
     message: 'My Notification Message', // STRING: The notification message
-    data: {}, // OBJECT: The push data
+    data: {}, // OBJECT: The push data or the defined userInfo in local notifications
 }
 ```
 
@@ -302,16 +320,18 @@ EXAMPLE:
 ```javascript
 PushNotification.localNotification({
   /* Android Only Properties */
-  id: 0, // (optional) Valid unique 32 bit integer specified as string. default: Autogenerated Unique ID
+  channelId: "your-channel-id", // (required) channelId, if the channel doesn't exist, notification will not trigger.
   ticker: "My Notification Ticker", // (optional)
   showWhen: true, // (optional) default: true
   autoCancel: true, // (optional) default: true
-  largeIcon: "ic_launcher", // (optional) default: "ic_launcher"
+  largeIcon: "ic_launcher", // (optional) default: "ic_launcher". Use "" for no large icon.
   largeIconUrl: "https://www.example.tld/picture.jpg", // (optional) default: undefined
-  smallIcon: "ic_notification", // (optional) default: "ic_notification" with fallback for "ic_launcher"
+  smallIcon: "ic_notification", // (optional) default: "ic_notification" with fallback for "ic_launcher". Use "" for default small icon.
   bigText: "My big text that will be shown when notification is expanded", // (optional) default: "message" prop
   subText: "This is a subText", // (optional) default: none
   bigPictureUrl: "https://www.example.tld/picture.jpg", // (optional) default: undefined
+  bigLargeIcon: "ic_launcher", // (optional) default: undefined
+  bigLargeIconUrl: "https://www.example.tld/bigicon.jpg", // (optional) default: undefined
   color: "red", // (optional) default: system default
   vibrate: true, // (optional) default: true
   vibration: 300, // vibration length in milliseconds, ignored if vibrate=false, default: 1000
@@ -321,24 +341,27 @@ PushNotification.localNotification({
   ongoing: false, // (optional) set whether this is an "ongoing" notification
   priority: "high", // (optional) set notification priority, default: high
   visibility: "private", // (optional) set notification visibility, default: private
-  importance: "high", // (optional) set notification importance, default: high
-  allowWhileIdle: false, // (optional) set notification to work while on doze, default: false
-  ignoreInForeground: false, // (optional) if true, the notification will not be visible when the app is in the foreground (useful for parity with how iOS notifications appear)
+  ignoreInForeground: false, // (optional) if true, the notification will not be visible when the app is in the foreground (useful for parity with how iOS notifications appear). should be used in combine with `com.dieam.reactnativepushnotification.notification_foreground` setting
   shortcutId: "shortcut-id", // (optional) If this notification is duplicative of a Launcher shortcut, sets the id of the shortcut, in case the Launcher wants to hide the shortcut, default undefined
-  channelId: "your-custom-channel-id", // (optional) custom channelId, if the channel doesn't exist, it will be created with options passed above (importance, vibration, sound). Once the channel is created, the channel will not be update. Make sure your channelId is different if you change these options. If you have created a custom channel, it will apply options of the channel.
-  onlyAlertOnce: false, //(optional) alert will open only once with sound and notify, default: false
+  onlyAlertOnce: false, // (optional) alert will open only once with sound and notify, default: false
   
-  actions: '["Yes", "No"]', // (Android only) See the doc for notification actions to know more
+  when: null, // (optional) Add a timestamp (Unix timestamp value in milliseconds) pertaining to the notification (usually the time the event occurred). For apps targeting Build.VERSION_CODES.N and above, this time is not shown anymore by default and must be opted into by using `showWhen`, default: null.
+  usesChronometer: false, // (optional) Show the `when` field as a stopwatch. Instead of presenting `when` as a timestamp, the notification will show an automatically updating display of the minutes and seconds since when. Useful when showing an elapsed time (like an ongoing phone call), default: false.
+  timeoutAfter: null, // (optional) Specifies a duration in milliseconds after which this notification should be canceled, if it is not already canceled, default: null
+
+  messageId: "google:message_id", // (optional) added as `message_id` to intent extras so opening push notification can find data stored by @react-native-firebase/messaging module. 
+
+  actions: ["Yes", "No"], // (Android only) See the doc for notification actions to know more
   invokeApp: true, // (optional) This enable click on actions to bring back the application to foreground or stay in background, default: true
 
   /* iOS only properties */
-  alertAction: "view", // (optional) default: view
   category: "", // (optional) default: empty string
-  userInfo: {}, // (optional) default: {} (using null throws a JSON value '<null>' error)
 
   /* iOS and Android properties */
+  id: 0, // (optional) Valid unique 32 bit integer specified as string. default: Autogenerated Unique ID
   title: "My Notification Title", // (optional)
   message: "My Notification Message", // (required)
+  userInfo: {}, // (optional) default: {} (using null throws a JSON value '<null>' error)
   playSound: false, // (optional) default: true
   soundName: "default", // (optional) Sound to play when the notification is shown. Value of 'default' plays the default sound. It can be set to a custom sound such as 'android.resource://com.xyz/raw/my_sound'. It will look for the 'my_sound' audio file in 'res/raw' directory and play it. default: 'default' (default sound is played)
   number: 10, // (optional) Valid 32 bit integer specified as string. default: none (Cannot be zero)
@@ -357,6 +380,19 @@ PushNotification.localNotificationSchedule({
   //... You can use all the options from localNotifications
   message: "My Notification Message", // (required)
   date: new Date(Date.now() + 60 * 1000), // in 60 secs
+  allowWhileIdle: false, // (optional) set notification to work while on doze, default: false
+});
+```
+
+## Get the initial notification
+
+`PushNotification.popInitialNotification(callback)`
+
+EXAMPLE:
+
+```javascript
+PushNotification.popInitialNotification((notification) => {
+  console.log('Initial Notification', notification);
 });
 ```
 
@@ -372,47 +408,26 @@ In the location notification json specify the full file name:
 
 ## Channel Management (Android)
 
-This library doesn't include a full Channel Management at the moment. Channels are generated on the fly when you pass options to `PushNotification.localNotification` or `PushNotification.localNotificationSchedule`.
+To use channels, create them at startup and pass the matching `channelId` through to `PushNotification.localNotification` or `PushNotification.localNotificationSchedule`.
 
-The pattern of `channel_id` is:
-
-```
-rn-push-notification-channel-id-(importance: default "4")(-soundname, default if playSound "-default")-(vibration, default "300")
-```
-
-By default, 1 channel is created:
-
-- rn-push-notification-channel-id-4-default-300 (used for remote notification if none already exist).
-
-you can avoid the default creation by using this:
-
-```xml
-  <meta-data  android:name="com.dieam.reactnativepushnotification.channel_create_default"
-          android:value="false"/>
+```javascript
+  PushNotification.createChannel(
+    {
+      channelId: "channel-id", // (required)
+      channelName: "My channel", // (required)
+      channelDescription: "A channel to categorise your notifications", // (optional) default: undefined.
+      playSound: false, // (optional) default: true
+      soundName: "default", // (optional) See `soundName` parameter of `localNotification` function
+      importance: 4, // (optional) default: 4. Int value of the Android notification importance
+      vibrate: true, // (optional) default: true. Creates the default vibration patten if true.
+    },
+    (created) => console.log(`createChannel returned '${created}'`) // (optional) callback returns whether the channel was created, false means it already existed.
+  );
 ```
 
-**NOTE: Without channel, remote notifications don't work**
+**NOTE: Without channel, notifications don't work**
 
-In the notifications options, you can provide a custom channel id with `channelId: "your-custom-channel-id"`, if the channel doesn't exist, it will be created with options passed above (importance, vibration, sound). Once the channel is created, the channel will not be update. Make sure your `channelId` is different if you change these options. If you have created a custom channel in another way, it will apply options of the channel.
-
-Custom and generated channels can have custom name and description in the `AndroidManifest.xml`, only if the library is responsible of the creation of the channel.
-You can also use `channelName` and `channelDescription` when you use to override the name or description. Once the channel is created, you won't be able to update them.
-
-```xml
-  <meta-data  android:name="com.dieam.reactnativepushnotification.notification_channel_name.[CHANNEL_ID]"
-          android:value="YOUR NOTIFICATION CHANNEL NAME FOR CHANNEL_ID"/>
-  <meta-data  android:name="com.dieam.reactnativepushnotification.notification_channel_description.[CHANNEL_ID]"
-              android:value="YOUR NOTIFICATION CHANNEL DESCRIPTION FOR CHANNEL_ID"/>
-```
-
-For example:
-
-```xml
-  <meta-data  android:name="com.dieam.reactnativepushnotification.notification_channel_name.rn-push-notification-channel-id-4-300"
-          android:value="YOUR NOTIFICATION CHANNEL NAME FOR SILENT CHANNEL"/>
-  <meta-data  android:name="com.dieam.reactnativepushnotification.notification_channel_description.rn-push-notification-channel-id-4-300"
-              android:value="YOUR NOTIFICATION CHANNEL DESCRIPTION FOR SILENT CHANNEL"/>
-```
+In the notifications options, you must provide a channel id with `channelId: "your-channel-id"`, if the channel doesn't exist the notification might not e triggered. Once the channel is created, the channel cannot be update. Make sure your `channelId` is different if you change these options. If you have created a channel in another way, it will apply options of the channel.
 
 If you want to use a different default channel for remote notification, refer to the documentation of Firebase:
 
@@ -423,6 +438,22 @@ If you want to use a different default channel for remote notification, refer to
       android:name="com.google.firebase.messaging.default_notification_channel_id"
       android:value="@string/default_notification_channel_id" />
 ```
+
+For local notifications, the same kind of option is available:
+
+- you can use:
+  ```xml
+    <meta-data
+        android:name="com.dieam.reactnativepushnotification.default_notification_channel_id"
+        android:value="@string/default_notification_channel_id" />
+  ```
+- If not defined, fallback to the Firebase value defined in the `AndroidManifest`:
+  ```xml
+    <meta-data
+        android:name="com.google.firebase.messaging.default_notification_channel_id"
+        android:value="..." />
+  ```
+- If not defined, fallback to the default Firebase channel id `fcm_fallback_notification_channel`
 
 ### List channels
 
@@ -454,9 +485,9 @@ PushNotification.channelBlocked(channel_id, function (blocked) {
 });
 ```
 
-### List channels
+### Delete channel
 
-You can list available channels with:
+You can delete a channel with:
 
 ```js
 PushNotification.deleteChannel(channel_id);
@@ -485,12 +516,10 @@ PushNotification.cancelLocalNotifications({id: '123'});
 
 Cancels all scheduled notifications AND clears the notifications alerts that are in the notification centre.
 
-_NOTE: there is currently no api for removing specific notification alerts from the notification centre._
-
 ### 3) removeAllDeliveredNotifications
 
 ```javascript
-PushNotificationIOS.removeAllDeliveredNotifications();
+PushNotification.removeAllDeliveredNotifications();
 ```
 
 Remove all delivered notifications from Notification Center
@@ -498,7 +527,7 @@ Remove all delivered notifications from Notification Center
 ### 4) getDeliveredNotifications
 
 ```javascript
-PushNotificationIOS.getDeliveredNotifications(callback);
+PushNotification.getDeliveredNotifications(callback);
 ```
 
 Provides you with a list of the app’s notifications that are still displayed in Notification Center
@@ -521,7 +550,7 @@ A delivered notification is an object containing:
 ### 5) removeDeliveredNotifications
 
 ```javascript
-PushNotificationIOS.removeDeliveredNotifications(identifiers);
+PushNotification.removeDeliveredNotifications(identifiers);
 ```
 
 Removes the specified notifications from Notification Center
@@ -535,7 +564,7 @@ Removes the specified notifications from Notification Center
 ### 6) getScheduledLocalNotifications
 
 ```javascript
-PushNotificationIOS.getScheduledLocalNotifications(callback);
+PushNotification.getScheduledLocalNotifications(callback);
 ```
 
 Provides you with a list of the app’s scheduled local notifications that are yet to be displayed
@@ -548,15 +577,16 @@ Provides you with a list of the app’s scheduled local notifications that are y
 
 Returns an array of local scheduled notification objects containing:
 
-| Name           | Type   | Description                               |
-| -------------- | ------ | ----------------------------------------- |
-| id             | number | The identifier of this notification.      |
-| date           | Date   | The fire date of this notification.       |
-| title          | string | The title of this notification.           |
-| message        | string | The message body of this notification.    |
-| soundName      | string | The sound name of this notification.      |
-| repeatInterval | number | The repeat interval of this notification. |
-| number         | number | App notification badge count number.      |
+| Name           | Type   | Description                                              |
+| -------------- | ------ | -------------------------------------------------------- |
+| id             | number | The identifier of this notification.                     |
+| date           | Date   | The fire date of this notification.                      |
+| title          | string | The title of this notification.                          |
+| message        | string | The message body of this notification.                   |
+| soundName      | string | The sound name of this notification.                     |
+| repeatInterval | number | (Android only) The repeat interval of this notification. |
+| number         | number | App notification badge count number.                     |
+| data           | any    | The user info of this notification.                      |
 
 ## Abandon Permissions
 
@@ -604,6 +634,12 @@ Available options:
 
 More information: https://developer.android.com/reference/android/app/NotificationManager#IMPORTANCE_DEFAULT
 
+## Show notifications while the app is in foreground
+
+If you want a consistent results in Android & iOS with the most flexibility, it is best to handle it manually by prompting a local notification when `onNotification` is triggered by a remote push notification on foreground (check `notification.foreground` prop).
+
+Watch out for an infinite loop triggering `onNotification` - remote & local notification will trigger it. You can overcome this by marking local notifications' data.
+
 ## Notification while idle
 
 (optional) Specify `allowWhileIdle` to set if the notification should be allowed to execute even when the system is on low-power idle modes.
@@ -619,6 +655,10 @@ https://developer.android.com/training/monitoring-device-state/doze-standby
 
 (optional) Specify `repeatType` and optionally `repeatTime` (Android-only) while scheduling the local notification. Check the local notification example above.
 
+### iOS
+Property `repeatType` can only be `day`.
+
+### Android
 Property `repeatType` could be one of `month`, `week`, `day`, `hour`, `minute`, `time`. If specified as time, it should be accompanied by one more parameter `repeatTime` which should the number of milliseconds between each interval.
 
 ## Notification Actions
@@ -637,7 +677,40 @@ Make sure you have the receiver in `AndroidManifest.xml`:
   <receiver android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationActions" />
 ```
 
-For iOS, you can use this [package](https://github.com/holmesal/react-native-ios-notification-actions) to add notification actions.
+Notifications with inline reply: 
+
+You must register an action as "ReplyInput", this will show in the notifications an input to write in. 
+
+EXAMPLE:
+```javascript
+PushNotification.localNotificationSchedule({
+  message: "My Notification Message", // (required)
+  date: new Date(Date.now() + (60 * 1000)), // in 60 secs
+  actions: ["ReplyInput"],
+  reply_placeholder_text: "Write your response...", // (required)
+  reply_button_text: "Reply" // (required)
+});
+```
+
+To get the text from the notification: 
+
+```javascript
+...
+if(notification.action === "ReplyInput"){
+  console.log("texto", notification.reply_text)// this will contain the inline reply text. 
+}
+...
+```
+
+For iOS, you can use:
+
+```javascript
+PushNotification.setNotificationCategories(categories);
+```
+
+And use the `category` field in the notification.
+
+Documentation [here](https://github.com/react-native-push-notification-ios/push-notification-ios#how-to-perform-different-action-based-on-user-selected-action) to add notification actions.
 
 ## Set application badge icon
 
@@ -647,15 +720,54 @@ Works natively in iOS.
 
 Uses the [ShortcutBadger](https://github.com/leolin310148/ShortcutBadger) on Android, and as such will not work on all Android devices.
 
-## Sending Notification Data From Server
-
-Same parameters as `PushNotification.localNotification()`
-
 ## Android Only Methods
 
 `PushNotification.subscribeToTopic(topic: string)` Subscribe to a topic (works only with Firebase)
 
 `PushNotification.unsubscribeFromTopic(topic: string)` Unsubscribe from a topic (works only with Firebase)
+
+## Android Custom Notification Handling
+
+Unlike iOS, Android apps handle the creation of their own notifications. React Native Push Notifications does a "best guess" to create and handle incoming notifications. However, when using 3rd party notification platforms and tools, the initial notification creation process may need to be customized.
+
+### Customizing Notification Creation
+
+If your notification service uses a custom data payload format, React Native Push Notifications will not be able to parse the data correctly to create an initial notification.
+
+For these cases, you should:
+
+1. Remove the intent handler configuration for React Native Push Notifications from your `android/app/src/main/AndroidManifest.xml`.
+2. Implement initial notification creation as per the instructions from your Provider.
+
+### Handling Custom Payloads
+
+Data payloads of notifications from 3rd party services may not match the format expected by React Native Push Notification. When tapped, these notifications will not pass the details and data to the `onNotification()` event handler. Custom `IntentHandlers` allow you to fix this so that correct `notification` objects are sent to your `onNotification()` method.
+
+Custom handlers are added in Application init or `MainActivity.onCreate()` methods:
+
+```
+RNPushNotification.IntentHandlers.add(new RNPushNotification.RNIntentHandler() {
+  @Override
+  public void onNewIntent(Intent intent) {
+    // If your provider requires some parsing on the intent before the data can be
+    // used, add that code here. Otherwise leave empty.
+  }
+
+  @Nullable
+  @Override
+  public Bundle getBundleFromIntent(Intent intent) {
+    // This should return the bundle data that will be serialized to the `notification.data`
+    // property sent to the `onNotification()` handler. Return `null` if there is no data
+    // or this is not an intent from your provider.
+    
+    // Example:
+    if (intent.hasExtra("MY_NOTIFICATION_PROVIDER_DATA_KEY")) {
+      return intent.getBundleExtra("MY_NOTIFICATION_PROVIDER_DATA_KEY");
+    }
+    return null;
+  }
+});
+```
 
 ## Checking Notification Permissions
 
