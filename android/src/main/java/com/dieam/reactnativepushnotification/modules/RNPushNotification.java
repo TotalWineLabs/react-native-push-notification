@@ -36,27 +36,16 @@ import android.util.Log;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingService;
 
 public class RNPushNotification extends ReactContextBaseJavaModule implements ActivityEventListener {
     public static final String LOG_TAG = "RNPushNotification";// all logging should use this tag
     public static final String KEY_TEXT_REPLY = "key_text_reply";
-
-    public interface RNIntentHandler {
-        void onNewIntent(Intent intent);
-  
-        @Nullable
-        Bundle getBundleFromIntent(Intent intent);
-    }
-  
     public static ArrayList<RNIntentHandler> IntentHandlers = new ArrayList();
-
-    private RNPushNotificationHelper mRNPushNotificationHelper;
+    private final RNPushNotificationHelper mRNPushNotificationHelper;
     private final SecureRandom mRandomNumberGenerator = new SecureRandom();
-    private RNPushNotificationJsDelivery mJsDelivery;
-
+    private final RNPushNotificationJsDelivery mJsDelivery;
     public RNPushNotification(ReactApplicationContext reactContext) {
         super(reactContext);
 
@@ -110,7 +99,7 @@ public class RNPushNotification extends ReactContextBaseJavaModule implements Ac
         for (RNIntentHandler handler : IntentHandlers) {
             handler.onNewIntent(intent);
         }
-        
+
         Bundle bundle = this.getBundleFromIntent(intent);
         if (bundle != null) {
             mJsDelivery.notifyNotification(bundle);
@@ -137,29 +126,13 @@ public class RNPushNotification extends ReactContextBaseJavaModule implements Ac
 
     @ReactMethod
     public void requestPermissions() {
-      final RNPushNotificationJsDelivery fMjsDelivery = mJsDelivery;
-      
-      FirebaseInstanceId.getInstance().getInstanceId()
-              .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
-                  @Override
-                  public void onComplete(@NonNull Task<InstanceIdResult> task) {
-                      if (!task.isSuccessful()) {
-                          Log.e(LOG_TAG, "exception", task.getException());
-                          return;
-                      }
-
-                      WritableMap params = Arguments.createMap();
-                      params.putString("deviceToken", task.getResult().getToken());
-                      fMjsDelivery.sendEvent("remoteNotificationsRegistered", params);
-                  }
-              });
     }
 
     @ReactMethod
     public void subscribeToTopic(String topic) {
         FirebaseMessaging.getInstance().subscribeToTopic(topic);
     }
-    
+
     @ReactMethod
     public void unsubscribeFromTopic(String topic) {
         FirebaseMessaging.getInstance().unsubscribeFromTopic(topic);
@@ -282,17 +255,6 @@ public class RNPushNotification extends ReactContextBaseJavaModule implements Ac
      * Unregister for all remote notifications received
      */
     public void abandonPermissions() {
-      new Thread(new Runnable() {
-          @Override
-          public void run() {
-              try {
-                  FirebaseInstanceId.getInstance().deleteInstanceId();
-                  Log.i(LOG_TAG, "InstanceID deleted");
-              } catch (IOException e) {
-                  Log.e(LOG_TAG, "exception", e);
-              }
-          }
-      }).start();
     }
 
     @ReactMethod
@@ -301,7 +263,7 @@ public class RNPushNotification extends ReactContextBaseJavaModule implements Ac
      */
     public void getChannels(Callback callback) {
       WritableArray array = Arguments.fromList(mRNPushNotificationHelper.listChannels());
-      
+
       if(callback != null) {
         callback.invoke(array);
       }
@@ -349,5 +311,12 @@ public class RNPushNotification extends ReactContextBaseJavaModule implements Ac
      */
     public void deleteChannel(String channel_id) {
       mRNPushNotificationHelper.deleteChannel(channel_id);
+    }
+
+    public interface RNIntentHandler {
+        void onNewIntent(Intent intent);
+
+        @Nullable
+        Bundle getBundleFromIntent(Intent intent);
     }
 }
