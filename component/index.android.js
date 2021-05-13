@@ -2,7 +2,7 @@
 
 import { NativeModules, DeviceEventEmitter } from "react-native";
 
-let RNPushNotification = NativeModules.RNPushNotification;
+let RNPushNotification = NativeModules.ReactNativePushNotification;
 let _notifHandlers = new Map();
 
 var DEVICE_NOTIF_EVENT = 'remoteNotificationReceived';
@@ -30,6 +30,10 @@ NotificationsComponent.prototype.requestPermissions = function() {
 
 NotificationsComponent.prototype.subscribeToTopic = function(topic) {
 	RNPushNotification.subscribeToTopic(topic);
+};
+
+NotificationsComponent.prototype.unsubscribeFromTopic = function(topic) {
+	RNPushNotification.unsubscribeFromTopic(topic);
 };
 
 NotificationsComponent.prototype.cancelLocalNotifications = function(details) {
@@ -152,6 +156,10 @@ NotificationsComponent.prototype.getChannels = function(callback) {
 
 NotificationsComponent.prototype.channelExists = function(channel_id, callback) {
 	RNPushNotification.channelExists(channel_id, callback);
+}
+
+NotificationsComponent.prototype.createChannel = function(channelInfo, callback) {
+	RNPushNotification.createChannel(channelInfo, callback);
 }
 
 NotificationsComponent.prototype.channelBlocked = function(channel_id, callback) {
