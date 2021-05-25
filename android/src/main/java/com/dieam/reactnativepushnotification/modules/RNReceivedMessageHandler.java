@@ -76,7 +76,7 @@ public class RNReceivedMessageHandler {
         jsDelivery.sendEvent("remoteNotificationsRegistered", params);
     }
 
-    public void handleReceivedMessage(RemoteMessage message) {
+    public void handleReceivedMessage(RemoteMessage message, String overrideColor) {
         String from = message.getFrom();
         RemoteMessage.Notification remoteNotification = message.getNotification();
         final Bundle bundle = new Bundle();
@@ -92,7 +92,7 @@ public class RNReceivedMessageHandler {
             bundle.putString("title", title);
             bundle.putString("message", body);
             bundle.putString("sound", remoteNotification.getSound());
-            bundle.putString("color", remoteNotification.getColor());
+            bundle.putString("color", overrideColor);
             bundle.putString("tag", remoteNotification.getTag());
             
             if(remoteNotification.getChannelId() != null) {
