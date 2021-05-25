@@ -74,6 +74,6 @@ public class RNPushNotificationListenerService extends FirebaseMessagingService 
 
     @Override
     public void onMessageReceived(RemoteMessage message) {
-        mMessageReceivedHandler.handleReceivedMessage(message);
+        mMessageReceivedHandler.handleReceivedMessage(message, null);
     }
 }

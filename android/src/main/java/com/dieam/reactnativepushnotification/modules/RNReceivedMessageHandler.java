@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.Log;
 import android.net.Uri;
 import androidx.annotation.NonNull;
@@ -92,7 +93,11 @@ public class RNReceivedMessageHandler {
             bundle.putString("title", title);
             bundle.putString("message", body);
             bundle.putString("sound", remoteNotification.getSound());
-            bundle.putString("color", overrideColor);
+            if (!TextUtils.isEmpty(overrideColor)) {
+                bundle.putString("color", overrideColor);
+            } else {
+                bundle.putString("color", remoteNotification.getColor());
+            }
             bundle.putString("tag", remoteNotification.getTag());
             
             if(remoteNotification.getChannelId() != null) {
